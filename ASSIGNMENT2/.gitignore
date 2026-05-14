@@ -1,0 +1,16 @@
+# Dataset (troppo pesanti per git)
+datasets/
+
+# Artefatti generati dalla pipeline
+models/
+results/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Ambienti virtuali
+.venv/
+env/
