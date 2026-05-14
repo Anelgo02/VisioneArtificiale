@@ -14,27 +14,28 @@ valutazione con 3-fold StratifiedKFold. Dettaglio completo in `PROJECT_GUIDELINE
 
 ---
 
-## Stato attuale — 13 Maggio 2026
+## Stato attuale — 14 Maggio 2026
 
 ### Completato
 - [x] `requirements.txt` — dipendenze pin-nate
-- [x] `config.py` — tutti i parametri centralizzati (percorsi, K values, seed, path artefatti)
+- [x] `config.py` — parametri centralizzati. Funzioni file includono `desc_type` per supportare SIFT e ORB
 - [x] `utils.py` — helper: save/load pickle, caricamento immagini, collect_labeled_paths, plot_confusion_matrix, Timer
 - [x] `00_check_datasets.py` — verifica integrità dataset (conteggio classi, test OpenCV, test SIFT)
-- [x] `.gitignore` — esclude `datasets/`, `models/`, `results/`
-- [x] **Fase 0 ESEGUITA** — dataset verificati e pronti:
-  - AID: 30 classi, 10.000 immagini (distribuzione non uniforme, normale per AID)
-  - UC Merced: 21 classi, 2.100 immagini (100 per classe, perfettamente bilanciato)
-  - OpenCV e SIFT funzionanti su entrambi i dataset
+- [x] `01_extract_descriptors.py` — SIFT (e opzionalmente ORB) su AID, max 100 desc/img
+- [x] `02_build_vocabulary.py` — MiniBatchKMeans per ogni (desc_type, K), K ∈ {50, 100, 500}
+- [x] `03_compute_bow.py` — istogrammi BoW L2-normalizzati per UC Merced, per ogni (desc_type, K)
+- [x] `04_cross_validation.py` — 3 assi di confronto: descrittore × K × classificatore
+- [x] `05_train_final.py` — training finale sul modello vincente, CM su split 70/30, salva artefatti
+- [x] `inference.py` — script singola immagine → classe predetta
+- [x] `SLIDE_NOTES.md` — note dettagliate per la presentazione (slide 1–6, 9, 10, +1 pronte)
+- [x] **Fase 0 ESEGUITA** — dataset verificati e pronti (AID: 30 classi 10k img, UCM: 21 classi 2100 img)
 
-### Da fare (in ordine)
-- [ ] **Fase 1a** (`01_extract_descriptors.py`): SIFT su tutte le immagini AID, max 100 desc/img, salva `models/descriptors_aid.pkl`
-- [ ] **Fase 1b** (`02_build_vocabulary.py`): MiniBatchKMeans per K ∈ {50, 100, 500}, salva `models/vocabulary_K{k}.pkl`
-- [ ] **Fase 2** (`03_compute_bow.py`): istogrammi BoW L2-normalizzati per UC Merced, salva `models/bow_ucmerced_K{k}.pkl`
-- [ ] **Fase 3** (`04_cross_validation.py`): 3-fold CV, SVM-RBF + Random Forest, salva `results/cv_results.csv`
-- [ ] **Fase 4** (`05_train_final.py`): training finale sul modello vincente, salva `models/classifier_final.pkl`
-- [ ] **Inferenza** (`inference.py`): script singola immagine → classe predetta
-- [ ] **Slide** (`presentazione.pdf`): 10+1 slide, struttura in `PROJECT_GUIDELINES.md` §12
+### Da fare
+- [ ] **Eseguire pipeline sul fisso** (Ryzen 5800X3D): script 01 → 02 → 03 → 04 → 05
+- [ ] **Slide 7** — tabella risultati CV (dopo esecuzione)
+- [ ] **Slide 8** — matrice di confusione (dopo esecuzione)
+- [ ] **Slide 10** — problemi riscontrati (da completare durante esecuzione)
+- [ ] **Presentazione PDF** — da `SLIDE_NOTES.md`, entro 25–26 Maggio
 
 ---
 
@@ -44,20 +45,23 @@ valutazione con 3-fold StratifiedKFold. Dettaglio completo in `PROJECT_GUIDELINE
 ASSIGNMENT2/
 ├── CLAUDE.md                  ← questo file
 ├── PROJECT_GUIDELINES.md      ← decisioni progettuali e motivazioni
-├── config.py                  ← parametri centralizzati (modificare qui percorsi e K)
+├── SLIDE_NOTES.md             ← note per le slide (aggiornare dopo esecuzione)
+├── config.py                  ← parametri centralizzati
 ├── utils.py                   ← funzioni helper condivise
 ├── requirements.txt
 ├── .gitignore
 │
-├── 00_check_datasets.py       ← [PROSSIMO] verifica dataset prima di partire
-├── 01_extract_descriptors.py  ← [DA CREARE]
-├── 02_build_vocabulary.py     ← [DA CREARE]
-├── 03_compute_bow.py          ← [DA CREARE]
-├── 04_cross_validation.py     ← [DA CREARE]
-├── 05_train_final.py          ← [DA CREARE]
-├── inference.py               ← [DA CREARE]
+├── 00_check_datasets.py       ← [ESEGUITO] verifica dataset
+├── 01_extract_descriptors.py  ← SIFT/ORB su AID → descriptors_aid_{type}.pkl
+├── 02_build_vocabulary.py     ← MiniBatchKMeans → vocabulary_{type}_K{k}.pkl
+├── 03_compute_bow.py          ← istogrammi BoW → bow_ucmerced_{type}_K{k}.pkl
+├── 04_cross_validation.py     ← 3-fold CV → cv_results.csv
+├── 05_train_final.py          ← training finale → classifier_final.pkl + CM
+├── inference.py               ← python inference.py <path_img>
 │
-├── datasets/                  ← NON in git — inserire manualmente
+├── Classificazione di Immagini attraverso BoW.docx  ← bozza presentazione
+│
+├── datasets/                  ← NON in git — inserire manualmente sul fisso
 │   ├── AID/<classe>/*.jpg
 │   └── UCMerced/Images/<classe>/*.tif
 ├── models/                    ← NON in git — generato dalla pipeline
@@ -66,16 +70,30 @@ ASSIGNMENT2/
 
 ---
 
+## Assi di confronto sperimentale
+
+| Asse | Opzioni | Obbligatorio |
+|------|---------|--------------|
+| Tipo descrittore | SIFT, ORB | ORB opzionale — abilitare in `config.py` |
+| Dimensione vocabolario K | 50, 100, 500 | Sì |
+| Classificatore | SVM-RBF, Random Forest | Sì |
+
+Per abilitare ORB: in `config.py` cambiare `DESCRIPTOR_TYPES = ["SIFT"]` in `["SIFT", "ORB"]`.
+Tutti gli script si adattano automaticamente senza altre modifiche.
+
+---
+
 ## Decisioni chiave (sintesi)
 
 | Scelta | Alternativa scartata | Motivo |
 |--------|----------------------|--------|
-| SIFT (float 128-d) | ORB (binario) | K-Means con distanza euclidea non funziona su binari |
+| SIFT (float 128-d) | ORB (binario) | K-Means euclideo non definito su vettori binari |
 | MiniBatchKMeans | KMeans pieno | ~1M descrittori: troppo lento/memory con KMeans standard |
 | Max 100 desc/img AID | Tutti i desc | Bilancio RAM (≈512 MB) / diversità vocabolario |
 | Norm L2 istogrammi | L1 / nessuna | Standard per SVM-RBF; evita bias da numero di keypoint |
 | SVM-RBF + RandomForest | SVM-lin + SVM-RBF | Confronto informativo tra paradigmi diversi |
 | StratifiedKFold(3) | KFold semplice | Garantisce proporzione classi per fold (richiesto consegna) |
+| CM su split 70/30 | CM su training | La CM deve mostrare errori su dati mai visti |
 | RANDOM_SEED = 42 | — | Riproducibilità totale tra macchine diverse |
 
 ---
@@ -84,10 +102,10 @@ ASSIGNMENT2/
 
 ```bash
 conda activate visioneArtificiale
-cd "D:\Documenti\Visione Artificiale\ASSIGNMENT2"
+cd ".../ASSIGNMENT2"
 
-python 00_check_datasets.py       # verifica dataset
-python 01_extract_descriptors.py  # ~10-20 min sul fisso
+python 00_check_datasets.py       # verifica dataset (già eseguito)
+python 01_extract_descriptors.py  # ~15-20 min sul fisso
 python 02_build_vocabulary.py     # ~5-15 min per K
 python 03_compute_bow.py          # ~2-5 min per K
 python 04_cross_validation.py     # ~10-30 min per combinazione
@@ -102,3 +120,4 @@ python inference.py <path_img>    # test su singola immagine
 - Gli script numerati sono **idempotenti**: se l'artefatto `.pkl` esiste già, saltano il ricalcolo.
 - Per forzare il ricalcolo: cancellare il `.pkl` corrispondente in `models/`.
 - Se si cambia macchina: copiare solo `models/*.pkl` e `results/` — i dataset vanno reinseriti.
+- Dopo esecuzione: aggiornare `SLIDE_NOTES.md` con i valori reali di slide 7, 8, 10.

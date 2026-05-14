@@ -23,19 +23,24 @@ DATASETS_DIR = PROJECT_ROOT / "datasets"
 AID_ROOT     = DATASETS_DIR / "AID"
 UCM_ROOT     = DATASETS_DIR / "UCMerced" / "Images"
 
-# ── Estrazione descrittori (Fase 1a) ─────────────────────────────────────────
+# ── Descrittori locali ───────────────────────────────────────────────────────
+#   "SIFT" obbligatorio; aggiungere "ORB" per il confronto opzionale
+DESCRIPTOR_TYPES = ["SIFT"]       # esempio con entrambi: ["SIFT", "ORB"]
 MAX_DESCRIPTORS_PER_IMAGE = 100   # cap per immagine AID
-DESCRIPTORS_FILE = MODELS_DIR / "descriptors_aid.pkl"
+
+# ── Estrazione descrittori (Fase 1a) ─────────────────────────────────────────
+def descriptors_file(desc_type: str) -> Path:
+    return MODELS_DIR / f"descriptors_aid_{desc_type}.pkl"
 
 # ── Costruzione vocabolario (Fase 1b) ────────────────────────────────────────
 K_VALUES = [50, 100, 500]         # dimensioni del vocabolario da testare
 
-def vocabulary_file(k: int) -> Path:
-    return MODELS_DIR / f"vocabulary_K{k}.pkl"
+def vocabulary_file(desc_type: str, k: int) -> Path:
+    return MODELS_DIR / f"vocabulary_{desc_type}_K{k}.pkl"
 
 # ── Rappresentazione BoW (Fase 2) ────────────────────────────────────────────
-def bow_file(k: int) -> Path:
-    return MODELS_DIR / f"bow_ucmerced_K{k}.pkl"
+def bow_file(desc_type: str, k: int) -> Path:
+    return MODELS_DIR / f"bow_ucmerced_{desc_type}_K{k}.pkl"
 
 # ── Cross-validation (Fase 3) ────────────────────────────────────────────────
 N_FOLDS = 3
