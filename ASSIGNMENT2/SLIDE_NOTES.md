@@ -243,35 +243,42 @@ Scegliere SVM-lineare + SVM-RBF sarebbe stato troppo simile.
 
 ---
 
-## SLIDE 7 — Risultati: tabella comparativa ← DA COMPLETARE DOPO CV
+## SLIDE 7 — Risultati: tabella comparativa ✅ COMPLETATA
 
-> Compilare con i valori reali da `results/cv_results.csv`
+> Dati reali da `results/cv_results.csv` — esecuzione del 15 Maggio 2026
 
 | K | Classificatore | Accuracy (mean ± std) | F1 macro (mean ± std) |
 |---|----------------|-----------------------|-----------------------|
-| 50 | SVM-RBF | — | — |
-| 50 | Random Forest | — | — |
-| 100 | SVM-RBF | — | — |
-| 100 | Random Forest | — | — |
-| 500 | SVM-RBF | — | — |
-| 500 | Random Forest | — | — |
+| 50 | SVM-RBF | 66.6% ± 1.4% | 66.2% ± 1.5% |
+| 50 | Random Forest | 62.5% ± 0.2% | 61.2% ± 0.3% |
+| 100 | SVM-RBF | 68.2% ± 1.1% | 67.8% ± 1.1% |
+| 100 | Random Forest | 61.8% ± 0.5% | 60.5% ± 0.6% |
+| **500** | **SVM-RBF** | **71.6% ± 1.2%** | **71.3% ± 1.0%** |
+| 500 | Random Forest | 60.1% ± 0.5% | 58.2% ± 0.7% |
+
+**Modello vincente**: SIFT + K=500 + SVM-RBF
 
 **Cosa commentare**:
-- Quale K dà i risultati migliori e perché (coerente con le aspettative: K=500 più ricco)
-- Quale classificatore vince e perché
-- Varianza tra i fold (std alta = instabilità)
+- SVM-RBF migliora monotonicamente con K: più visual words → rappresentazione più ricca → separazione migliore nello spazio kernel RBF
+- Random Forest degrada con K crescente: istogrammi K=500 sono molto sparsi (la maggior parte dei bin è zero); gli alberi faticano a trovare split utili su feature sparse ad alta dimensione
+- Std basse (≤ 1.5%) → risultati stabili tra i fold, non fluke
+- Il risultato è coerente con la letteratura BoW: SVM-RBF con vocabolario grande è la combinazione classicamente vincente
 
 ---
 
-## SLIDE 8 — Matrice di confusione ← DA COMPLETARE DOPO TRAINING FINALE
+## SLIDE 8 — Matrice di confusione ✅ COMPLETATA
 
-> Inserire il PNG generato da `05_train_final.py`
+> PNG in `results/confusion_matrix.png` — SIFT K=500 SVM-RBF, split 70/30 stratificato
 
 **Cosa commentare**:
-- Quali classi vengono classificate meglio (es. beach, forest → texture molto distinta)
-- Quali classi vengono confuse tra loro e perché (es. buildings ↔ dense residential → strutture visive simili)
-- Connessione con la natura delle visual words: classi con texture ripetitive e caratteristiche
-  producono istogrammi BoW più discriminativi
+- Classi con texture molto caratteristica (beach, forest, chaparral) → diagonale alta, pochi errori
+- Confusioni attese e spiegabili:
+  - buildings ↔ denseresidential: stessa struttura visiva (tetti ravvicinati), BoW non ha informazione di scala
+  - mediumresidential ↔ sparseresidential: differenza solo nella densità, istogrammi BoW simili
+  - freeway ↔ storageanks: entrambe con strutture geometriche ripetitive (corsie/serbatoi)
+- Connessione con BoW: le classi confuse hanno visual words simili perché le texture locali si assomigliano;
+  il BoW non "vede" la struttura globale della scena, solo l'aggregato di patch locali
+- La CM è su dati held-out (30% mai visti in training): è una valutazione onesta
 
 ---
 
@@ -328,4 +335,4 @@ ambienti embedded senza GPU.
 
 ---
 
-*Ultimo aggiornamento: 14 Maggio 2026 — tutti gli script completati (01→05 + inference.py)*
+*Ultimo aggiornamento: 15 Maggio 2026 — pipeline eseguita, slide 7 e 8 completate con dati reali*

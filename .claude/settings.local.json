@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(ls \"D:\\\\Documenti\\\\Visione Artificiale\\\\ASSIGNMENT2\\\\models\\\\\"; ls \"D:\\\\Documenti\\\\Visione Artificiale\\\\ASSIGNMENT2\\\\results\\\\\")",
+      "PowerShell(conda run *)",
+      "PowerShell(Get-Command *)"
+    ]
+  }
+}

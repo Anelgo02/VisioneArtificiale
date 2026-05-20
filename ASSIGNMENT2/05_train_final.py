@@ -18,7 +18,7 @@ import pandas as pd
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
 
 from config import (
     CV_RESULTS_FILE,
@@ -97,6 +97,13 @@ def main():
 
     acc_split = (y_pred == y[test_idx]).mean()
     print(f"Accuracy sullo split 30% : {acc_split:.3f}")
+
+    report = classification_report(y[test_idx], y_pred, target_names=class_names)
+    print("\n── Classification Report (split 30%) ──")
+    print(report)
+    report_path = RESULTS_DIR / "classification_report.txt"
+    report_path.write_text(report, encoding="utf-8")
+    print(f"[saved] {report_path}")
 
     # ── 2. Training finale su tutto il dataset ────────────────────────────────
     print("\n── Training finale su UC Merced completo ──")

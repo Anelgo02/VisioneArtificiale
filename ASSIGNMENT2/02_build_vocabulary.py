@@ -43,7 +43,7 @@ def main():
         desc_path = descriptors_file(desc_type)
 
         if not desc_path.exists():
-            print(f"[skip] {desc_path.name} non trovato — esegui prima 01_extract_descriptors.py")
+            print(f"[skip] {desc_path.name} non trovato — eseguire prima 01_extract_descriptors.py")
             continue
 
         print(f"\n{'═'*50}")
@@ -66,6 +66,8 @@ def main():
 
             print(f"Inertia (errore di quantizzazione): {kmeans.inertia_:,.0f}")
             print(f"Iterazioni eseguite: {kmeans.n_iter_}")
+
+            # salva l'intero oggetto KMeans 
             save_pickle(kmeans, out_path)
             print()
 

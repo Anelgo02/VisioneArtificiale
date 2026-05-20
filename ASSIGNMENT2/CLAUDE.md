@@ -14,7 +14,7 @@ valutazione con 3-fold StratifiedKFold. Dettaglio completo in `PROJECT_GUIDELINE
 
 ---
 
-## Stato attuale — 14 Maggio 2026
+## Stato attuale — 19 Maggio 2026
 
 ### Completato
 - [x] `requirements.txt` — dipendenze pin-nate
@@ -25,17 +25,32 @@ valutazione con 3-fold StratifiedKFold. Dettaglio completo in `PROJECT_GUIDELINE
 - [x] `02_build_vocabulary.py` — MiniBatchKMeans per ogni (desc_type, K), K ∈ {50, 100, 500}
 - [x] `03_compute_bow.py` — istogrammi BoW L2-normalizzati per UC Merced, per ogni (desc_type, K)
 - [x] `04_cross_validation.py` — 3 assi di confronto: descrittore × K × classificatore
-- [x] `05_train_final.py` — training finale sul modello vincente, CM su split 70/30, salva artefatti
+- [x] `05_train_final.py` — training finale sul modello vincente, CM su split 70/30, salva artefatti + classification_report
 - [x] `inference.py` — script singola immagine → classe predetta
-- [x] `SLIDE_NOTES.md` — note dettagliate per la presentazione (slide 1–6, 9, 10, +1 pronte)
-- [x] **Fase 0 ESEGUITA** — dataset verificati e pronti (AID: 30 classi 10k img, UCM: 21 classi 2100 img)
+- [x] `SLIDE_NOTES.md` — note dettagliate per la presentazione (tutte le slide pronte con dati reali)
+- [x] **Pipeline completa ESEGUITA** (15 Maggio sul fisso Ryzen 5800X3D)
+- [x] `results/cv_results.csv` — risultati 3-fold CV per tutte le combinazioni (K × classificatore)
+- [x] `results/confusion_matrix.png` — heatmap 21×21, modello vincente, split 70/30
+- [x] `results/classification_report.txt` — precision/recall/F1 per singola classe (aggiunto 19 Maggio)
+
+### Risultati chiave
+- **Modello vincente**: SIFT + K=500 + SVM-RBF
+- **CV**: Accuracy 71.6% ± 1.2%, F1 macro 71.3% ± 1.0%
+- **Split 30% held-out**: Accuracy 73.0%, F1 macro 73%
+- **Classi migliori**: chaparral (0.98), parkinglot (0.98), harbor (0.95), agricultural (0.93)
+- **Classi peggiori**: sparseresidential (0.51), storagetanks (0.51), baseballdiamond (0.56)
 
 ### Da fare
-- [ ] **Eseguire pipeline sul fisso** (Ryzen 5800X3D): script 01 → 02 → 03 → 04 → 05
-- [ ] **Slide 7** — tabella risultati CV (dopo esecuzione)
-- [ ] **Slide 8** — matrice di confusione (dopo esecuzione)
-- [ ] **Slide 10** — problemi riscontrati (da completare durante esecuzione)
-- [ ] **Presentazione PDF** — da `SLIDE_NOTES.md`, entro 25–26 Maggio
+- [ ] **Presentazione PDF** — struttura pronta in `SLIDE_NOTES.md`, entro 25–26 Maggio
+  - Slide 7: tabella CV + metriche aggregate del modello vincente (dati in `cv_results.csv`)
+  - Slide 8: matrice di confusione (`results/confusion_matrix.png`)
+  - Slide 9: problemi riscontrati (encoding cp1252 su Windows risolto con reconfigure UTF-8)
+
+### Note ORB
+- Il codice supporta ORB (conversione uint8→float32 in `01_extract_descriptors.py`) ma NON è stato eseguito
+- `config.py` ha `DESCRIPTOR_TYPES = ["SIFT"]` — ORB è disabilitato
+- La conversione float32 è un'approssimazione (Euclidea su byte, non Hamming su bit): da dichiarare se si include
+- Decisione: lasciare solo SIFT, citare ORB come possibile miglioramento in slide 10
 
 ---
 

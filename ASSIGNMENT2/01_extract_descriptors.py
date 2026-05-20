@@ -49,6 +49,7 @@ def extract_descriptors(image_paths: list, desc_type: str,
         if img is None:
             continue
 
+            #keypoint scartati, mi interessa solo la matrice dei descrittori
         _, descs = extractor.detectAndCompute(img, None)
 
         if descs is None or len(descs) == 0:
@@ -56,7 +57,10 @@ def extract_descriptors(image_paths: list, desc_type: str,
             continue
 
         if len(descs) > max_per_image:
+            # blocchiamo il campionamento a 100 a caso senza reinserimento, rng inizializzato con seed=42 mi permette di 
+            # generare un array di 100 indici scelti a caso tra 0 e len(descs) ovvero il numero di descrittori trovati, senza ripetizioni (replace=False) 
             idx   = rng.choice(len(descs), size=max_per_image, replace=False)
+            # utilizziamo gli indici casuali per selezionare 100 righe corrispondenti dalla matrice dei descrittori
             descs = descs[idx]
 
         # ORB restituisce uint8: convertiamo a float32 per K-Means euclideo
@@ -65,6 +69,7 @@ def extract_descriptors(image_paths: list, desc_type: str,
     if n_no_keypoints > 0:
         print(f"[warn] {n_no_keypoints} immagini senza keypoint {desc_type} (saltate)")
 
+    # alla fine del loop su tutte le 10.000 immagini, vstack impila verticalmente tutte le matrici in una sola
     return np.vstack(all_descriptors)
 
 
