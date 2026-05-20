@@ -289,7 +289,7 @@ Scegliere SVM-lineare + SVM-RBF sarebbe stato troppo simile.
 | Problema | Soluzione adottata |
 |----------|--------------------|
 | Warning Pylance su cv2/tqdm in VS Code | Falso positivo: pacchetti installati nel conda env. Risolto selezionando interprete corretto |
-| *(aggiungere durante sviluppo)* | |
+| Immagini senza keypoint SIFT | Gestione proattiva in `00_check_datasets.py`: test SIFT su campione prima della pipeline, segnala `[WARN]` se 0 keypoint. Fallback difensivo in `03_compute_bow.py`: immagini senza keypoint ricevono istogramma di zeri invece di bloccare la pipeline |
 
 ---
 
