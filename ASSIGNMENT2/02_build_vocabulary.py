@@ -22,7 +22,6 @@ Perché costruire il vocabolario solo su AID?
     sui descrittori di test, l'istogramma BoW "vedrebbe" informazioni del test.
 """
 
-import sys
 import numpy as np
 from sklearn.cluster import MiniBatchKMeans
 

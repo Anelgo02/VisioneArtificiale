@@ -11,7 +11,6 @@ così i passi successivi non vengono eseguiti su dati inconsistenti.
 
 import sys
 import cv2
-import numpy as np
 from pathlib import Path
 from collections import Counter
 
