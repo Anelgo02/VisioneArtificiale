@@ -12,6 +12,19 @@ Per ogni combinazione:
   - calcola accuracy, precision, recall, F1-score (macro-averaged)
 
 Output: results/cv_results.csv
+
+Perché cross-validation e non un singolo train/test split?
+    Con 2100 campioni (100 per classe × 21 classi) un singolo split 70/30
+    lascerebbe solo 630 campioni di test, con alta varianza nella stima delle
+    metriche. La 3-fold CV usa il 100% dei dati sia per training che per test
+    (in fold diversi) e restituisce media ± deviazione standard, che è una
+    stima molto più robusta della capacità di generalizzazione del modello.
+
+Perché StratifiedKFold e non KFold?
+    KFold semplice potrebbe creare fold sbilanciati (un fold con più campioni
+    di "agricultural" e meno di "storagetanks"). StratifiedKFold garantisce
+    che ogni fold abbia la stessa proporzione di classi del dataset completo,
+    rendendo le metriche per fold comparabili tra loro.
 """
 
 import sys
@@ -26,6 +39,14 @@ from config import DESCRIPTOR_TYPES, K_VALUES, N_FOLDS, CV_RESULTS_FILE, RANDOM_
 from utils import load_pickle, Timer
 
 
+# Dizionario dei classificatori da confrontare.
+# SVM-RBF: kernel gaussiano, adatto a feature vettoriali dense come gli istogrammi
+#   BoW L2-normalizzati. Efficace in spazi ad alta dimensionalità (K=500 → 500-d).
+# RandomForest: ensemble di alberi decisionali, lavora bene senza normalizzazione
+#   ma qui riceverebbe già vettori normalizzati. Serve come baseline alternativa
+#   per valutare se un metodo non-kernel compete con SVM su questi dati.
+# n_jobs=-1 in RF: usa tutti i core disponibili per parallelizzare la costruzione
+#   degli alberi (ogni albero è indipendente dagli altri).
 CLASSIFIERS = {
     "SVM-RBF":      SVC(kernel="rbf", random_state=RANDOM_SEED),
     "RandomForest": RandomForestClassifier(n_estimators=100, random_state=RANDOM_SEED, n_jobs=-1),
@@ -33,6 +54,26 @@ CLASSIFIERS = {
 
 
 def evaluate_fold(clf, X_train, y_train, X_test, y_test) -> dict:
+    """
+    Addestra il classificatore su un fold e restituisce le metriche sul test.
+
+    Parametri
+    ---------
+    clf              : classificatore scikit-learn (già istanziato)
+    X_train, y_train : dati di training del fold corrente
+    X_test,  y_test  : dati di test del fold corrente
+
+    Ritorna
+    -------
+    dict con chiavi: accuracy, precision, recall, f1
+        Tutte le metriche multi-classe usano average="macro":
+        si calcola la metrica per ogni classe e si fa la media non pesata.
+        Con 21 classi bilanciate (100 campioni ciascuna) macro e weighted
+        coincidono, ma macro è più conservativo: penalizza di più gli errori
+        sulle classi piccole (se presenti).
+        zero_division=0: se una classe non appare nelle predizioni, la sua
+        precision/recall vale 0 anziché generare un warning.
+    """
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
     return {
@@ -44,10 +85,26 @@ def evaluate_fold(clf, X_train, y_train, X_test, y_test) -> dict:
 
 
 def cross_validate(clf_name: str, clf, X: np.ndarray, y: np.ndarray) -> dict:
+    """
+    Esegue N_FOLDS-fold stratificata e aggrega le metriche (media ± std).
+
+    Parametri
+    ---------
+    clf_name : nome del classificatore (usato solo per il campo "classifier" nell'output)
+    clf      : istanza del classificatore (viene ri-addestrata da zero a ogni fold)
+    X        : feature matrix (n_samples, K) float32
+    y        : etichette (n_samples,)
+
+    Ritorna
+    -------
+    dict con: classifier, accuracy_mean/std, precision_mean/std,
+              recall_mean/std, f1_mean/std
+    """
     # StratifiedKFold garantisce che ogni fold abbia la stessa proporzione di classi
     # del dataset originale (es. ~33 campioni per classe per fold su UCMerced bilanciato).
     # shuffle=True rimescola prima di suddividere, evitando artefatti dovuti all'ordine
-    # alfabetico con cui collect_labeled_paths carica le immagini.
+    # alfabetico con cui collect_labeled_paths carica le immagini (tutte le immagini
+    # di "agricultural" vengono prima di "airplane", ecc.).
     skf    = StratifiedKFold(n_splits=N_FOLDS, shuffle=True, random_state=RANDOM_SEED)
     scores = []
 
@@ -61,9 +118,10 @@ def cross_validate(clf_name: str, clf, X: np.ndarray, y: np.ndarray) -> dict:
         scores.append(fold_scores)
         print(f"acc={fold_scores['accuracy']:.3f}  f1={fold_scores['f1']:.3f}")
 
-    # Media e deviazione standard delle metriche sui 3 fold.
-    # F1 macro-averaged: ogni classe pesa uguale indipendentemente dal numero di
-    # campioni → metrica corretta per dataset bilanciati con 21 classi equiprobabili.
+    # Aggregazione: per ogni metrica calcoliamo media e deviazione standard sui fold.
+    # La std misura la variabilità della metrica al variare del fold: una std alta
+    # indica che le prestazioni dipendono molto da quali campioni finiscono nel test,
+    # ovvero che il modello è instabile o il dataset ha alta varianza inter-fold.
     result = {"classifier": clf_name}
     for metric in ["accuracy", "precision", "recall", "f1"]:
         vals = [s[metric] for s in scores]
@@ -74,6 +132,10 @@ def cross_validate(clf_name: str, clf, X: np.ndarray, y: np.ndarray) -> dict:
 
 
 def main():
+    # Idempotenza a livello di file: se il CSV esiste già, lo script esce senza
+    # ricalcolare. A differenza degli altri script, qui non si può fare skip
+    # per singola combinazione (il CSV è un unico file), quindi si blocca tutto.
+    # Per ricalcolare: cancellare results/cv_results.csv.
     if CV_RESULTS_FILE.exists():
         print(f"[skip] {CV_RESULTS_FILE} già presente — cancellalo per ricalcolare")
         sys.exit(0)
@@ -101,6 +163,8 @@ def main():
                 with Timer():
                     result = cross_validate(clf_name, clf, X, y)
 
+                # Aggiunta delle colonne di contesto al risultato del fold:
+                # necessarie per distinguere le righe nel CSV finale.
                 result["descriptor"] = desc_type
                 result["K"]          = k
                 all_results.append(result)
@@ -112,6 +176,9 @@ def main():
         print("\n[ERR] Nessun risultato prodotto. Verifica che i file bow_ucmerced_*.pkl esistano.")
         sys.exit(1)
 
+    # Selezione e ordinamento delle colonne per leggibilità del CSV:
+    # prima le chiavi di identificazione (descriptor, K, classifier),
+    # poi le metriche in ordine logico (accuracy → f1).
     cols = ["descriptor", "K", "classifier",
             "accuracy_mean", "accuracy_std",
             "precision_mean", "precision_std",
@@ -119,15 +186,22 @@ def main():
             "f1_mean", "f1_std"]
 
     df = pd.DataFrame(all_results)[cols]
+    # Ordinamento per rendere il CSV navigabile: raggruppa per descrittore,
+    # poi per K crescente, poi per nome classificatore alfabetico.
     df = df.sort_values(["descriptor", "K", "classifier"]).reset_index(drop=True)
 
     CV_RESULTS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    # float_format="%.4f": 4 cifre decimali sono sufficienti per metriche in [0,1];
+    # evita la notazione scientifica che renderebbe il CSV meno leggibile.
     df.to_csv(CV_RESULTS_FILE, index=False, float_format="%.4f")
     print(f"\n[saved] {CV_RESULTS_FILE}")
 
     print("\n── Riepilogo finale ──────────────────────────────────")
     print(df.to_string(index=False))
 
+    # Il modello vincente è quello con F1 macro medio più alto.
+    # F1 macro è la metrica principale perché bilancia precision e recall
+    # su tutte le classi equipesate, indipendentemente dalla loro frequenza.
     best = df.loc[df["f1_mean"].idxmax()]
     print(f"\nModello migliore (F1 macro):")
     print(f"  descrittore  = {best['descriptor']}")
