@@ -44,6 +44,10 @@ def evaluate_fold(clf, X_train, y_train, X_test, y_test) -> dict:
 
 
 def cross_validate(clf_name: str, clf, X: np.ndarray, y: np.ndarray) -> dict:
+    # StratifiedKFold garantisce che ogni fold abbia la stessa proporzione di classi
+    # del dataset originale (es. ~33 campioni per classe per fold su UCMerced bilanciato).
+    # shuffle=True rimescola prima di suddividere, evitando artefatti dovuti all'ordine
+    # alfabetico con cui collect_labeled_paths carica le immagini.
     skf    = StratifiedKFold(n_splits=N_FOLDS, shuffle=True, random_state=RANDOM_SEED)
     scores = []
 
@@ -57,6 +61,9 @@ def cross_validate(clf_name: str, clf, X: np.ndarray, y: np.ndarray) -> dict:
         scores.append(fold_scores)
         print(f"acc={fold_scores['accuracy']:.3f}  f1={fold_scores['f1']:.3f}")
 
+    # Media e deviazione standard delle metriche sui 3 fold.
+    # F1 macro-averaged: ogni classe pesa uguale indipendentemente dal numero di
+    # campioni → metrica corretta per dataset bilanciati con 21 classi equiprobabili.
     result = {"classifier": clf_name}
     for metric in ["accuracy", "precision", "recall", "f1"]:
         vals = [s[metric] for s in scores]

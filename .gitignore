@@ -1,0 +1,14 @@
+# Editor e strumenti di sviluppo
+.vscode/
+.claude/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db

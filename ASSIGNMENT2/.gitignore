@@ -14,3 +14,9 @@ __pycache__/
 # Ambienti virtuali
 .venv/
 env/
+
+# File interni di progetto
+CLAUDE.md
+PROJECT_GUIDELINES.md
+SLIDE_NOTES.md
+*.docx

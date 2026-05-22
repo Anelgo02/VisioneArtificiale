@@ -27,6 +27,11 @@ from utils import load_pickle, save_pickle, Timer
 
 
 def build_vocabulary(descriptors: np.ndarray, k: int) -> MiniBatchKMeans:
+    # MiniBatchKMeans trova K centroidi nello spazio a 128 dimensioni dei descrittori SIFT.
+    # Ogni centroide diventa una "visual word": un pattern visivo prototipico.
+    # Usiamo MiniBatch invece di KMeans standard perché con ~1M vettori da 128-d
+    # il KMeans classico richiederebbe troppa RAM e tempo (aggiorna i centroidi
+    # su mini-batch casuali anziché sull'intero dataset ad ogni iterazione).
     kmeans = MiniBatchKMeans(
         n_clusters=k,
         batch_size=KMEANS_BATCH_SIZE,
@@ -35,6 +40,9 @@ def build_vocabulary(descriptors: np.ndarray, k: int) -> MiniBatchKMeans:
         verbose=0,
     )
     kmeans.fit(descriptors)
+    # Salviamo l'intero oggetto KMeans (non solo kmeans.cluster_centers_) perché
+    # in fase BoW useremo kmeans.predict() per assegnare ogni descrittore alla
+    # visual word più vicina.
     return kmeans
 
 

@@ -40,10 +40,20 @@ def make_extractor(desc_type: str):
 def image_to_bow(img: np.ndarray, extractor, kmeans, k: int) -> np.ndarray:
     _, descs = extractor.detectAndCompute(img, None)
 
+    # Immagine senza keypoint (es. zona piatta senza gradienti): restituiamo
+    # un istogramma di zeri. Dopo la normalizzazione L2 resterà zero: il
+    # classificatore lo tratterà come un campione "neutro".
     if descs is None or len(descs) == 0:
         return np.zeros(k, dtype=np.float32)
 
+    # Hard assignment: ogni descrittore viene assegnato alla visual word più vicina
+    # (il centroide KMeans più prossimo in senso euclideo). predict() restituisce
+    # un array di indici interi in [0, K-1], uno per ogni riga di descs.
     words = kmeans.predict(descs.astype(np.float32))
+
+    # Conta quante volte compare ogni visual word → istogramma di K bin.
+    # minlength=k garantisce che l'array abbia sempre K elementi anche se
+    # alcune visual words non compaiono nell'immagine.
     hist  = np.bincount(words, minlength=k).astype(np.float32)
     return hist
 
@@ -51,7 +61,7 @@ def image_to_bow(img: np.ndarray, extractor, kmeans, k: int) -> np.ndarray:
 def compute_bow_matrix(paths, labels, desc_type, kmeans, k):
     extractor      = make_extractor(desc_type)
     n              = len(paths)
-    X              = np.zeros((n, k), dtype=np.float32)
+    X              = np.zeros((n, k), dtype=np.float32) # preallochiamo tutte le 2100 righe per evitare disallineamenti dovuti a immagini senza keypoint
     n_no_keypoints = 0
 
     for i, path in enumerate(tqdm(paths, desc=f"BoW {desc_type} K={k}", unit="img")):
@@ -66,6 +76,10 @@ def compute_bow_matrix(paths, labels, desc_type, kmeans, k):
     if n_no_keypoints > 0:
         print(f"[warn] {n_no_keypoints} immagini senza keypoint (istogramma zero)")
 
+    # Normalizzazione L2: porta ogni istogramma a norma unitaria.
+    # Senza normalizzazione, immagini con molti keypoint avrebbero istogrammi
+    # con valori assoluti maggiori, falsando la distanza percepita dall'SVM.
+    # Con L2, il classificatore confronta la *distribuzione relativa* delle visual words.
     X = normalize(X, norm="l2")
     y = np.array(labels)
     return X, y

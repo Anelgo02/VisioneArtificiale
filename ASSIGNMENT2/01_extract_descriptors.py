@@ -30,6 +30,7 @@ def make_extractor(desc_type: str):
     """Restituisce il rilevatore OpenCV per il tipo di descrittore richiesto."""
     if desc_type == "SIFT":
         return cv2.SIFT_create()
+        # nel caso in cui usassimo ORB 
     if desc_type == "ORB":
         # nfeatures alto: campioneremo noi a max MAX_DESCRIPTORS_PER_IMAGE
         return cv2.ORB_create(nfeatures=500)
@@ -49,7 +50,11 @@ def extract_descriptors(image_paths: list, desc_type: str,
         if img is None:
             continue
 
-            #keypoint scartati, mi interessa solo la matrice dei descrittori
+        # detectAndCompute fa due cose in una sola chiamata:
+        #   1. rileva N keypoint (posizione, scala, orientamento)
+        #   2. calcola il descrittore 128-d per ciascuno
+        # restituisce (keypoints, matrice NxD); scartiamo i keypoint (_),
+        # ci interessano solo i vettori descrittori → descs.shape = (N, 128)
         _, descs = extractor.detectAndCompute(img, None)
 
         if descs is None or len(descs) == 0:
@@ -57,19 +62,22 @@ def extract_descriptors(image_paths: list, desc_type: str,
             continue
 
         if len(descs) > max_per_image:
-            # blocchiamo il campionamento a 100 a caso senza reinserimento, rng inizializzato con seed=42 mi permette di 
-            # generare un array di 100 indici scelti a caso tra 0 e len(descs) ovvero il numero di descrittori trovati, senza ripetizioni (replace=False) 
+            # Campionamento casuale senza reinserimento: scegliamo max_per_image
+            # indici tra 0 e N-1 e prendiamo le righe corrispondenti.
+            # Limitare a 100 desc/img bilancia diversità del vocabolario e uso RAM:
+            # 10.000 img × 100 desc = ~1M vettori, gestibili da MiniBatchKMeans.
             idx   = rng.choice(len(descs), size=max_per_image, replace=False)
-            # utilizziamo gli indici casuali per selezionare 100 righe corrispondenti dalla matrice dei descrittori
             descs = descs[idx]
 
-        # ORB restituisce uint8: convertiamo a float32 per K-Means euclideo
+        # ORB restituisce uint8; convertiamo a float32 perché K-Means usa distanza euclidea
         all_descriptors.append(descs.astype(np.float32))
 
     if n_no_keypoints > 0:
         print(f"[warn] {n_no_keypoints} immagini senza keypoint {desc_type} (saltate)")
 
-    # alla fine del loop su tutte le 10.000 immagini, vstack impila verticalmente tutte le matrici in una sola
+    # Impila verticalmente le matrici di tutte le immagini in un'unica matrice:
+    # [(N1,128), (N2,128), ..., (N10000,128)]  →  (~1M, 128)
+    # Questa è la matrice che entra in MiniBatchKMeans per costruire il vocabolario.
     return np.vstack(all_descriptors)
 
 

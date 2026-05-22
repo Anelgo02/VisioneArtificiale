@@ -21,7 +21,11 @@ from utils import load_pickle, load_image_gray
 
 
 def get_descriptor_type() -> str:
-    """Legge da cv_results.csv quale descrittore ha vinto."""
+    """Legge da cv_results.csv quale descrittore ha vinto.
+
+    Non hardcodiamo il tipo di descrittore: lo leggiamo dal CSV così che
+    se si ri-esegue la pipeline con ORB abilitato, inference si adatta automaticamente.
+    """
     if not CV_RESULTS_FILE.exists():
         print("[ERR] cv_results.csv non trovato. Esegui prima la pipeline completa.")
         sys.exit(1)
@@ -39,7 +43,12 @@ def make_extractor(desc_type: str):
 
 
 def extract_bow(img: np.ndarray, extractor, kmeans) -> np.ndarray:
-    """Estrae l'istogramma BoW L2-normalizzato da un'immagine."""
+    """Estrae l'istogramma BoW L2-normalizzato da un'immagine.
+
+    Replica esattamente il preprocessing usato in 03_compute_bow.py:
+    stessa estrazione SIFT → stesso hard assignment → stessa normalizzazione L2.
+    È fondamentale che inference usi la stessa pipeline di training.
+    """
     k = kmeans.n_clusters
     _, descs = extractor.detectAndCompute(img, None)
 
@@ -48,6 +57,8 @@ def extract_bow(img: np.ndarray, extractor, kmeans) -> np.ndarray:
         return np.zeros((1, k), dtype=np.float32)
 
     words = kmeans.predict(descs.astype(np.float32))
+    # reshape(1, -1): clf.predict si aspetta input 2D (n_samples, n_features);
+    # per una singola immagine la shape deve essere (1, K) non (K,).
     hist  = np.bincount(words, minlength=k).astype(np.float32).reshape(1, -1)
     hist  = normalize(hist, norm="l2")
     return hist

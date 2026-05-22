@@ -81,6 +81,9 @@ def main():
     print(f"\nX: {X.shape}   classi: {len(class_names)}")
 
     # ── 1. Matrice di confusione su split 70/30 ──────────────────────────────
+    # La CM deve mostrare errori su dati MAI visti in training.
+    # Addestriamo clf_cm sul 70% e valutiamo sul 30% tenuto fuori.
+    # Questo modello (clf_cm) serve SOLO per la visualizzazione: verrà scartato.
     print("\n── Generazione matrice di confusione (split 70/30) ──")
     sss = StratifiedShuffleSplit(n_splits=1, test_size=0.30, random_state=RANDOM_SEED)
     train_idx, test_idx = next(sss.split(X, y))
@@ -106,6 +109,9 @@ def main():
     print(f"[saved] {report_path}")
 
     # ── 2. Training finale su tutto il dataset ────────────────────────────────
+    # Il modello di deployment viene addestrato su TUTTI i 2100 campioni UCMerced.
+    # La metrica di riferimento rimane quella della CV (cv_results.csv), non questo split.
+    # Più dati di training → migliore generalizzazione su immagini nuove in produzione.
     print("\n── Training finale su UC Merced completo ──")
     clf_final = CLASSIFIER_FACTORY[clf_name]()
     with Timer():
@@ -114,6 +120,8 @@ def main():
     save_pickle(clf_final, FINAL_MODEL_FILE)
 
     # ── 3. Copia vocabolario vincente come "vocabulary_final" ─────────────────
+    # Rinominiamo il vocabolario vincente in un nome stabile (vocabulary_final.pkl)
+    # così inference.py non deve sapere quale K ha vinto: carica sempre lo stesso file.
     voc_src = vocabulary_file(desc_type, k)
     shutil.copy(voc_src, FINAL_VOCAB_FILE)
     print(f"[saved] {FINAL_VOCAB_FILE}  (copia di {voc_src.name})")
