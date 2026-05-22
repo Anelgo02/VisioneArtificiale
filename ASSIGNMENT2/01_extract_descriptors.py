@@ -10,11 +10,6 @@ Per ogni tipo di descrittore in DESCRIPTOR_TYPES:
 Output: models/descriptors_aid_SIFT.pkl  →  np.ndarray (N, 128) float32
         models/descriptors_aid_ORB.pkl   →  np.ndarray (N, 32)  float32  [se ORB abilitato]
 
-Perché solo AID e non UC Merced?
-    Il vocabolario BoW deve essere costruito su un insieme di immagini
-    indipendente dal test set. AID è il dataset usato per il training del
-    vocabolario; UC Merced è riservato alla classificazione (fase 3).
-    Estrarre i descrittori su AID evita data leakage nel vocabolario.
 """
 
 import sys
@@ -38,16 +33,7 @@ def make_extractor(desc_type: str):
 
     SIFT  → cv2.SIFT_create()
         Descrittore float32 a 128 dimensioni, invariante a scala e rotazione.
-        Richiede opencv-contrib-python oppure opencv-python >= 4.4 (brevetto scaduto).
 
-    ORB   → cv2.ORB_create(nfeatures=500)
-        Descrittore binario a 256 bit (32 byte), molto più veloce di SIFT
-        ma meno discriminativo. nfeatures=500 è impostato alto perché il
-        campionamento a MAX_DESCRIPTORS_PER_IMAGE viene fatto manualmente
-        dopo, per coerenza con la logica SIFT.
-        NOTA: K-Means usa distanza euclidea, non Hamming → i descrittori ORB
-        vengono convertiti in float32, che è un'approssimazione (vedi fase di
-        estrazione). Dichiarare questa scelta se si includono risultati ORB.
     """
     if desc_type == "SIFT":
         return cv2.SIFT_create()
@@ -80,6 +66,7 @@ def extract_descriptors(image_paths: list, desc_type: str,
     # Generatore NumPy con seme fisso: garantisce che campionamenti diversi
     # su macchine diverse producano sempre la stessa selezione di descrittori,
     # rendendo il vocabolario riproducibile.
+    
     rng = np.random.default_rng(seed)
 
     all_descriptors = []

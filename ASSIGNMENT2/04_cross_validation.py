@@ -13,13 +13,6 @@ Per ogni combinazione:
 
 Output: results/cv_results.csv
 
-Perché cross-validation e non un singolo train/test split?
-    Con 2100 campioni (100 per classe × 21 classi) un singolo split 70/30
-    lascerebbe solo 630 campioni di test, con alta varianza nella stima delle
-    metriche. La 3-fold CV usa il 100% dei dati sia per training che per test
-    (in fold diversi) e restituisce media ± deviazione standard, che è una
-    stima molto più robusta della capacità di generalizzazione del modello.
-
 Perché StratifiedKFold e non KFold?
     KFold semplice potrebbe creare fold sbilanciati (un fold con più campioni
     di "agricultural" e meno di "storagetanks"). StratifiedKFold garantisce
@@ -101,10 +94,7 @@ def cross_validate(clf_name: str, clf, X: np.ndarray, y: np.ndarray) -> dict:
               recall_mean/std, f1_mean/std
     """
     # StratifiedKFold garantisce che ogni fold abbia la stessa proporzione di classi
-    # del dataset originale (es. ~33 campioni per classe per fold su UCMerced bilanciato).
-    # shuffle=True rimescola prima di suddividere, evitando artefatti dovuti all'ordine
-    # alfabetico con cui collect_labeled_paths carica le immagini (tutte le immagini
-    # di "agricultural" vengono prima di "airplane", ecc.).
+    # del dataset originale
     skf    = StratifiedKFold(n_splits=N_FOLDS, shuffle=True, random_state=RANDOM_SEED)
     scores = []
 

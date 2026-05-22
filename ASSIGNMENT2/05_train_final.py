@@ -10,19 +10,11 @@ poi:
 La matrice di confusione usa un singolo split 70/30 stratificato (solo per visualizzazione).
 La metrica di riferimento rimane quella della cross-validation in cv_results.csv.
 
-Perché riaddestrare su tutto il dataset dopo la CV?
-    Durante la cross-validation ogni fold usa solo il 66% dei dati per il training.
-    Il modello finale di deployment deve essere il più generalizzabile possibile,
-    quindi si ri-addestra su tutti i 2100 campioni. Le metriche di riferimento
-    (accuracy, F1) rimangono quelle della CV, non quelle dello split 70/30 che
-    serve solo per visualizzare la matrice di confusione.
+Il modello finale di deployment deve essere il più generalizzabile possibile,
+quindi si ri-addestra su tutti i 2100 campioni. Le metriche di riferimento
+(accuracy, F1) rimangono quelle della CV, non quelle dello split 70/30 che
+serve solo per visualizzare la matrice di confusione.
 
-Perché la CM usa uno split 70/30 separato e non la CV?
-    La CV produce N predizioni per fold disgiunti, ma ricomporle in una singola
-    CM richiederebbe di concatenare i y_pred dei 3 fold — pratica valida ma che
-    mescola modelli addestrati su dati diversi. Lo split 70/30 stratificato è
-    più semplice e produce una CM pulita su un singolo modello coerente.
-    Il modello addestrato sul 70% viene scartato dopo la CM: non è il finale.
 """
 
 import sys
@@ -65,10 +57,7 @@ def load_best_config() -> tuple[str, int, str]:
     -------
     (desc_type, k, clf_name) : tipo descrittore, dimensione vocabolario, nome classificatore
 
-    La selezione si basa su f1_mean (media sui fold) e non su accuracy_mean
-    perché F1 macro penalizza i classificatori che ignorano le classi difficili.
-    Con 21 classi bilanciate le due metriche sono molto correlate, ma F1 è
-    più informativo in generale.
+    La selezione si basa su f1_mean (media sui fold)
     """
     if not CV_RESULTS_FILE.exists():
         print(f"[ERR] {CV_RESULTS_FILE} non trovato.")

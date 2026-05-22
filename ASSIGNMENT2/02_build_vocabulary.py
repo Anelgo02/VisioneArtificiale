@@ -55,7 +55,7 @@ def build_vocabulary(descriptors: np.ndarray, k: int) -> MiniBatchKMeans:
         con N=1M e D=128 ogni passo richiede ~512 MB di operazioni floating point
         e scala male col numero di iterazioni. MiniBatchKMeans aggiorna i centroidi
         su mini-batch casuali di KMEANS_BATCH_SIZE vettori: molto più veloce
-        (10-100×) con perdita trascurabile di qualità dei centroidi.
+        (10-100x) con perdita trascurabile di qualità dei centroidi.
 
     Scelta dei valori di K (K_VALUES = [50, 100, 500]):
         K piccolo  → vocabolario grossolano, istogrammi rumorosi, classificatore
@@ -92,7 +92,7 @@ def main():
     for desc_type in DESCRIPTOR_TYPES:
         desc_path = descriptors_file(desc_type)
 
-        # Dipendenza esplicita dalla fase 1a: se i descrittori non esistono
+        # Dipende dalla fase 1a: se i descrittori non esistono
         # non ha senso procedere. Si stampa un messaggio orientativo invece
         # di sollevare un'eccezione, per gestire il caso in cui solo alcuni
         # tipi di descrittore siano stati estratti (es. SIFT sì, ORB no).

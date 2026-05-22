@@ -8,16 +8,9 @@ Per ogni combinazione (desc_type, K):
       2. assegna ogni descrittore alla visual word più vicina (kmeans.predict)
       3. conta le occorrenze → istogramma di K bin
   - normalizza L2 tutta la matrice
-  - salva X (2100 × K), y (2100,), class_names
+  - salva X (2100 x K), y (2100,), class_names
 
 Output: models/bow_ucmerced_{desc_type}_K{k}.pkl
-
-Perché UC Merced e non AID in questa fase?
-    AID è stato usato per costruire il vocabolario (fasi 1a-1b).
-    UC Merced è il dataset di classificazione: ogni immagine viene qui
-    convertita in un vettore BoW che sarà usato come feature dal classificatore
-    nelle fasi 4 e 5. Le due fasi sono separate per rispettare la separazione
-    tra vocabolario e dati di classificazione (no data leakage).
 
 Struttura dell'output salvato:
     {
@@ -62,7 +55,7 @@ def image_to_bow(img: np.ndarray, extractor, kmeans, k: int) -> np.ndarray:
 
     Pipeline interna:
         immagine grayscale
-            → descrittori locali (N_kp × D)
+            → descrittori locali (N_kp x D)
             → hard assignment al centroide più vicino (N_kp indici in [0,K-1])
             → conteggio occorrenze → istogramma (K,) float32
 
@@ -143,18 +136,7 @@ def compute_bow_matrix(paths, labels, desc_type, kmeans, k):
     if n_no_keypoints > 0:
         print(f"[warn] {n_no_keypoints} immagini senza keypoint (istogramma zero)")
 
-    # Normalizzazione L2 applicata sull'intera matrice in un'unica operazione:
-    #   X[i] = X[i] / ||X[i]||₂   per ogni riga i
-    # Perché L2 e non L1?
-    #   - L2 è lo standard per SVM-RBF: il kernel RBF misura distanze euclidee
-    #     nello spazio delle feature, che hanno senso solo se i vettori hanno
-    #     scala comparabile (norma unitaria).
-    #   - L1 normalizzerebbe le frequenze relative (proporzioni), ma è meno
-    #     efficace con SVM-RBF perché non corrisponde alla geometria del kernel.
-    #   - Senza normalizzazione, immagini con molti keypoint avrebbero valori
-    #     assoluti più alti, falsando la distanza percepita dall'SVM: una zona
-    #     urbana densa sembrerebbe "diversa" da una rurale solo per la quantità
-    #     di texture, non per la loro distribuzione relativa.
+    # Normalizzazione L2 applicata sull'intera matrice in un'unica operazione
     X = normalize(X, norm="l2")
     y = np.array(labels)
     return X, y
