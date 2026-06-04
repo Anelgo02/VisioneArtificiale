@@ -1,0 +1,13 @@
+# Dataset (troppo grandi per il repository)
+data/
+
+# Modelli addestrati (file .keras possono essere centinaia di MB)
+models/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
