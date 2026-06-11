@@ -8,6 +8,7 @@
 import sys
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 import tensorflow as tf
 
 import config
@@ -73,7 +74,57 @@ def predict(image_path, model_path=config.BEST_MODEL_PATH):
     for rank, idx in enumerate(top5_idx, 1):
         print(f"  {rank}. {config.UC_CLASS_NAMES[idx]:<25} {probs[idx]:.4f}")
 
+    # Visualizzazione: immagine + barre probabilità top-5
+    _show_prediction(image_path, probs, predicted_idx)
+
     return predicted_label, confidence
+
+
+def _show_prediction(image_path, probs, predicted_idx):
+    """
+    Mostra l'immagine originale affiancata a un bar chart delle top-5 probabilità.
+    Salva anche il risultato in results/inference_output.png.
+    """
+    # Carica immagine originale in RGB per visualizzazione (dimensioni originali)
+    img_display = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
+
+    top5_idx    = np.argsort(probs)[::-1][:5]
+    top5_labels = [config.UC_CLASS_NAMES[i] for i in top5_idx]
+    top5_probs  = probs[top5_idx]
+
+    # Colori: verde per la classe predetta, blu per le altre
+    colors = ['#2ecc71' if i == predicted_idx else '#3498db' for i in top5_idx]
+
+    fig, (ax_img, ax_bar) = plt.subplots(1, 2, figsize=(12, 5))
+
+    # --- Pannello sinistro: immagine ---
+    ax_img.imshow(img_display)
+    ax_img.axis('off')
+    pred_name = config.UC_CLASS_NAMES[predicted_idx]
+    ax_img.set_title(
+        f"Predizione: {pred_name}\nConfidenza: {probs[predicted_idx]:.1%}",
+        fontsize=13, fontweight='bold'
+    )
+
+    # --- Pannello destro: barre orizzontali top-5 ---
+    bars = ax_bar.barh(range(5), top5_probs, color=colors)
+    ax_bar.set_yticks(range(5))
+    ax_bar.set_yticklabels(top5_labels, fontsize=11)
+    ax_bar.invert_yaxis()   # classe più probabile in alto
+    ax_bar.set_xlim(0, 1)
+    ax_bar.set_xlabel("Probabilità", fontsize=11)
+    ax_bar.set_title("Top-5 classi", fontsize=12)
+
+    # Etichette percentuale a destra di ogni barra
+    for bar, p in zip(bars, top5_probs):
+        ax_bar.text(min(p + 0.02, 0.95), bar.get_y() + bar.get_height() / 2,
+                    f"{p:.1%}", va='center', fontsize=10)
+
+    plt.tight_layout()
+    out_path = "results/inference_output.png"
+    plt.savefig(out_path, dpi=150, bbox_inches='tight')
+    print(f"\nOutput salvato: {out_path}")
+    plt.show()
 
 
 if __name__ == "__main__":

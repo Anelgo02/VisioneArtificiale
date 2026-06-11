@@ -1,6 +1,8 @@
+
 # Assignment 3 — Classificazione di Immagini Aeree con CNN Residuale
 
-Corso di Visione Artificiale (LM-32).  
+Corso di Visione Artificiale (LM-32). 
+ 
 Classificazione di immagini aeree su **21 classi** (dataset UC Merced) tramite una CNN residuale custom con transfer learning da AID.
 
 ## Struttura del progetto
@@ -12,6 +14,7 @@ ASSIGNMENT3/
 ├── dataset.py      — caricamento OpenCV, split stratificato, augmentation
 ├── train.py        — Strategia 1 (pretrain AID + finetune UC) e Strategia 2 (scratch)
 ├── inference.py    — predizione su singola immagine
+├── evaluate.py     — valutazione del best model sul test set (classification report)
 ├── data/
 │   ├── AID/                        — dataset pre-training (30 classi, ~10k immagini)
 │   └── UCMerced_LandUse/Images/    — dataset target (21 classi, 2100 immagini)
@@ -21,9 +24,25 @@ ASSIGNMENT3/
 
 ## Installazione
 
+### Con conda (consigliato)
 ```bash
 conda create -n visioneArtificiale python=3.10
 conda activate visioneArtificiale
+pip install -r requirements.txt
+```
+
+### Con pip e virtualenv
+```bash
+python -m venv venv
+# Windows
+venv\Scripts\activate
+# Linux/macOS
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Senza ambiente virtuale
+```bash
 pip install -r requirements.txt
 ```
 
@@ -41,6 +60,13 @@ Esegue in sequenza:
 3. Training da zero su UC Merced
 4. Model selection sul validation set (F1-macro)
 5. Valutazione finale sul test set (Accuracy, Precision, Recall, F1, Confusion Matrix)
+
+### Valutazione del modello già addestrato
+```bash
+python evaluate.py
+```
+
+Carica il modello salvato in `models/best_model.keras` e stampa il classification report completo sul test set, senza rieseguire il training.
 
 ### Test rapido (poche epoche per verificare che non ci siano errori)
 Modifica `config.py` impostando `PRETRAIN_EPOCHS = 3`, `FINETUNE_EPOCHS = 3`, `SCRATCH_EPOCHS = 3`, poi:
@@ -79,3 +105,4 @@ python inference.py path/alla/immagine.jpg models/best_model.keras
 | Strategia fine-tuning | partial (60% layer congelati) |
 | Batch size | 32 |
 | Seed split | 42 |
+

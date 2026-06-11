@@ -1,12 +1,11 @@
 
 
 # ── Dataset paths ─────────────────────────────────────────────────────────────
-AID_DIR   = "data/AID"          # modifica con il tuo path reale
+AID_DIR   = "data/AID"          
 UC_DIR    = "data/UCMerced_LandUse/Images"
 
 # ── Immagini ───────────────────────────────────────────────────────────────────
-IMG_SIZE  = (128, 128)          # sotto 200x200 come richiesto; 128 è un buon compromesso
-                                # velocità/qualità su hardware consumer
+IMG_SIZE  = (128, 128)          # sotto 200x200; 128 è un buon compromesso velocità/qualità su hardware consumer
 CHANNELS  = 3                   # RGB
 
 # ── Split UC Merced ────────────────────────────────────────────────────────────
@@ -17,10 +16,10 @@ TEST_RATIO  = 0.15
 RANDOM_SEED = 42                # per riproducibilità
 
 # ── Architettura ───────────────────────────────────────────────────────────────
-# Questi valori sono lo scheletro; 
+
 FILTERS_STAGE_1 = 32            # primo stage convoluzionale
 FILTERS_STAGE_2 = 64            # secondo stage
-FILTERS_STAGE_3 = 128           # terzo stage (opzionale, aggiunge profondità)
+FILTERS_STAGE_3 = 128           # terzo stage 
 KERNEL_SIZE     = 3             # 3x3: cattura pattern locali, standard in letteratura
 DROPOUT_RATE    = 0.4           # regolarizzazione nel MLP finale
 # MLP finale
@@ -52,16 +51,15 @@ FINETUNE_LR       = 1e-4        # un ordine di grandezza sotto PRETRAIN_LR
 FINETUNE_BATCH    = 32
 FINETUNE_PATIENCE = 8
 
-# Strategia di fine-tuning: scegli UNA tra le tre opzioni
+# Strategie di fine-tuning: si è scelto di optare per la la strategia partial
 # "frozen"   -> congela tutto il backbone, addestra solo MLP
 # "partial"  -> congela i primi N layer, lascia liberi gli ultimi convoluzionali
 # "full"     -> addestra tutto il modello
-FINETUNE_STRATEGY = "partial"   # da motivare nella presentazione
+FINETUNE_STRATEGY = "partial"   
 
 # ── Training - da zero su UC (Strategia 2) ────────────────────────────────────
 SCRATCH_EPOCHS   = 80
 SCRATCH_LR       = 1e-3
-SCRATCH_BATCH    = 32
 SCRATCH_PATIENCE = 10
 
 # ── Paths di salvataggio ──────────────────────────────────────────────────────

@@ -21,7 +21,7 @@ os.makedirs("results", exist_ok=True)
 
 
 # ── Callback comuni ───────────────────────────────────────────────────────────
-# EarlyStopping: obbligatorio per assignment.
+# EarlyStopping
 #   monitor='val_loss': se la loss di validazione non migliora per `patience` epoche,
 #   si ferma. restore_best_weights recupera i pesi dell'epoca migliore.
 # ModelCheckpoint: salva automaticamente il migliore.
@@ -44,7 +44,7 @@ def get_callbacks(model_path, patience):
 
 
 # ── Plot delle curve di training ──────────────────────────────────────────────
-# Obbligatorio nelle slide: permette di diagnosticare overfitting visivamente.
+# permette di diagnosticare overfitting visivamente.
 # Overfitting tipico: training loss scende, validation loss risale dopo un minimo.
 
 def plot_history(history, title, save_path):
@@ -78,9 +78,7 @@ def pretrain_on_aid():
     ds_train, ds_val, num_classes = get_aid_datasets()
     model = build_model(num_classes=num_classes)
 
-    # Categorical cross-entropy come richiesto dal task.
-    # Perché? Con one-hot encoding + softmax, questa loss misura la divergenza KL
-    # tra la distribuzione predetta e quella vera (one-hot = distribuzione degenere).
+    # Categorical cross-entropy 
     # Adam: ottimizzatore adattivo, buona scelta di default per training da zero.
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=config.PRETRAIN_LR),
@@ -243,6 +241,7 @@ def main():
         print(f"\nSelezionato: Strategia 2 (F1={f1_s2:.4f} vs {f1_s1:.4f})")
 
     best_model.save(config.BEST_MODEL_PATH)
+    best_model.save_weights("models/best_model_weights.weights.h5")
     print(f"Miglior modello salvato: {config.BEST_MODEL_PATH}")
 
     # -- Valutazione finale (una sola volta sul test set) --

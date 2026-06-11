@@ -1,5 +1,4 @@
-# model.py
-# Implementazione del blocco residuale CUSTOM (non si può usare ResNet predefinita)
+# Implementazione del blocco residuale CUSTOM
 # e dell'architettura completa.
 
 import tensorflow as tf
@@ -8,13 +7,11 @@ import config
 
 
 # ── Blocco Residuale ──────────────────────────────────────────────────────────
-# y = F(x) + x   (come nelle slide)
+# y = F(x) + x   
 # F(x): due conv 3x3 con BN e ReLU
 # x:    skip connection (identità se i canali coincidono, conv 1x1 altrimenti)
 #
-# Perché BN prima di ReLU? È la scelta originale di He et al. (2016) e quella
-# che il professore si aspetta; la variante "pre-activation" (BN-ReLU-Conv)
-# è citata nelle slide come alternativa ma non è richiesta qui.
+# BN prima di ReLU perché è la scelta originale di He et al. (2016)
 
 def residual_block(x, filters, stride=1):
     """
@@ -33,18 +30,19 @@ def residual_block(x, filters, stride=1):
     shortcut = x
 
     # --- Ramo principale ---
-    x = layers.Conv2D(filters, kernel_size=3, strides=stride,
+    x = layers.Conv2D(filters, kernel_size=config.KERNEL_SIZE, strides=stride,
                       padding='same', use_bias=False)(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    x = layers.Conv2D(filters, kernel_size=3, strides=1,
+    x = layers.Conv2D(filters, kernel_size=config.KERNEL_SIZE, strides=1,
                       padding='same', use_bias=False)(x)
     x = layers.BatchNormalization()(x)
 
     # --- Skip connection ---
     # Se stride != 1 oppure il numero di canali cambia, non possiamo sommare
     # direttamente: le dimensioni non coincidono.
+
     # Soluzione: conv 1x1 con lo stesso stride per proiettare lo shortcut.
     # (uso_bias=False perché la BN che segue ha il proprio bias implicito)
     shortcut_channels = shortcut.shape[-1]
@@ -69,11 +67,10 @@ def residual_block(x, filters, stride=1):
 #   -> MaxPool
 #   -> Stage 3: blocco residuale opzionale (FILTERS_STAGE_3 canali)
 #   -> MaxPool
-#   -> Flatten  (obbligatorio, NON global average pooling come richiesto)
+#   -> Flatten  (NON global average pooling come richiesto)
 #   -> MLP classificatore (FC + Dropout + FC + ... + output softmax)
 #
-# NOTA: il task vieta explicit average pooling prima del classificatore.
-# Flatten è la scelta corretta qui.
+
 
 def build_model(num_classes, input_shape=None):
     """
@@ -90,9 +87,9 @@ def build_model(num_classes, input_shape=None):
     inputs = tf.keras.Input(shape=input_shape)
 
     # --- Stem: primo layer convoluzionale ---
-    # Perché uno stem separato? Serve a estrarre feature di base (bordi, texture)
-    # prima di entrare nei blocchi residuali. Questo è standard in tutte le ResNet.
-    x = layers.Conv2D(config.FILTERS_STAGE_1, kernel_size=3,
+    # Serve a estrarre feature di base (bordi, texture)
+    # prima di entrare nei blocchi residuali. 
+    x = layers.Conv2D(config.FILTERS_STAGE_1, kernel_size=config.KERNEL_SIZE,
                       strides=1, padding='same', use_bias=False)(inputs)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
@@ -108,22 +105,21 @@ def build_model(num_classes, input_shape=None):
     x = residual_block(x, filters=config.FILTERS_STAGE_2)
     x = layers.MaxPooling2D(pool_size=2)(x)
 
-    # --- Stage 3: terzo blocco residuale (opzionale ma consigliato) ---
+    # --- Stage 3: terzo blocco residuale ---
     x = residual_block(x, filters=config.FILTERS_STAGE_3)
     x = layers.MaxPooling2D(pool_size=2)(x)
 
     # --- Flatten ---
     # Trasforma (H', W', C) in un vettore 1D.
-    # Obbligatorio prima del MLP. NON usiamo GlobalAveragePooling come richiesto.
     x = layers.Flatten()(x)
 
-    # --- MLP classificatore ---
+    # --- MLP ---
     for units in config.MLP_UNITS:
         x = layers.Dense(units, activation='relu')(x)
         x = layers.Dropout(config.DROPOUT_RATE)(x)
 
     # Output: softmax su num_classes neuroni.
-    # Perché softmax? Produce una distribuzione di probabilità su tutte le classi,
+    # Produce una distribuzione di probabilità su tutte le classi,
     # necessaria con categorical cross-entropy.
     outputs = layers.Dense(num_classes, activation='softmax')(x)
 

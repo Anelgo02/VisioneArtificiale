@@ -107,14 +107,13 @@ def preprocess_batch(paths, labels, num_classes):
 
 
 # ── Augmentation (solo su training set) ──────────────────────────────────────
-# Perché solo sul training set? Applicarla a val/test causerebbe data leakage:
+# Applicarla a val/test causerebbe data leakage:
 # valuteremmo il modello su dati artificialmente modificati, non su dati reali.
 
 def augment_image(image, label):
     """
     Augmentation leggera:
       - flip orizzontale casuale
-      - rotazione casuale ±15°
       - variazione di luminosità
     Queste trasformazioni non cambiano la classe semantica (un aeroporto
     ruotato è ancora un aeroporto).

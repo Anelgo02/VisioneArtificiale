@@ -1,4 +1,5 @@
 tensorflow>=2.13.0
+keras==3.12.1
 opencv-python==4.10.0.84
 scikit-learn==1.4.2
 matplotlib==3.8.4
