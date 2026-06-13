@@ -1,8 +1,9 @@
 # Dataset (troppo grandi per il repository)
 data/
 
-# Modelli addestrati (file .keras possono essere centinaia di MB)
-models/
+# Modelli addestrati (solo best_model.keras viene tracciato)
+models/*
+!models/best_model.keras
 
 # Python
 __pycache__/

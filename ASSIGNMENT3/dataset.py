@@ -32,6 +32,7 @@ def load_paths_and_labels(dataset_dir):
         d for d in os.listdir(dataset_dir)
         if os.path.isdir(os.path.join(dataset_dir, d))
     ])
+    # mappatura classe con indice numerico 
     class_to_idx = {c: i for i, c in enumerate(classes)}
 
     paths, labels = [], []

@@ -1,4 +1,3 @@
-# inference.py
 # Dato il path di una immagine RGB, predice la classe con il miglior modello.
 # Requisiti del task:
 #   1. Carica l'immagine

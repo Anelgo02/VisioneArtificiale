@@ -44,7 +44,7 @@ def residual_block(x, filters, stride=1):
     # direttamente: le dimensioni non coincidono.
 
     # Soluzione: conv 1x1 con lo stesso stride per proiettare lo shortcut.
-    # (uso_bias=False perché la BN che segue ha il proprio bias implicito)
+    # (use_bias=False perché la BN che segue ha il proprio bias implicito)
     shortcut_channels = shortcut.shape[-1]
     if stride != 1 or shortcut_channels != filters:
         shortcut = layers.Conv2D(filters, kernel_size=1, strides=stride,
@@ -54,6 +54,7 @@ def residual_block(x, filters, stride=1):
     # --- Somma e attivazione finale ---
     x = layers.Add()([x, shortcut])
     x = layers.ReLU()(x)
+    
     return x
 
 
@@ -65,7 +66,7 @@ def residual_block(x, filters, stride=1):
 #   -> MaxPool  (dimezza risoluzione spaziale)
 #   -> Stage 2: blocco residuale (FILTERS_STAGE_2 canali)
 #   -> MaxPool
-#   -> Stage 3: blocco residuale opzionale (FILTERS_STAGE_3 canali)
+#   -> Stage 3: blocco residuale (FILTERS_STAGE_3 canali)
 #   -> MaxPool
 #   -> Flatten  (NON global average pooling come richiesto)
 #   -> MLP classificatore (FC + Dropout + FC + ... + output softmax)
@@ -158,7 +159,7 @@ def replace_head(pretrained_model, num_classes_new, finetune_strategy):
             layer.trainable = False
 
     elif finetune_strategy == "partial":
-        # Congela i primi 2/3 della rete, lascia liberi gli ultimi layer conv + MLP
+        # Congela il 60% della rete, lascia liberi gli ultimi layer conv + MLP
         total = len(new_model.layers)
         freeze_until = int(total * 0.6)   # congela il 60% iniziale
         for layer in new_model.layers[:freeze_until]:

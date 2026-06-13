@@ -1,3 +1,9 @@
+# Post-training
+
+# Valuta il modello selezionato (best_model.keras) sul test set di UC Merced,
+# senza rieseguire il training. Stampa il classification report per classe
+# (precision, recall, f1-score) e le metriche macro-average.
+
 import numpy as np
 import tensorflow as tf
 from sklearn.metrics import classification_report
