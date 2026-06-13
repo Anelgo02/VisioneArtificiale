@@ -106,3 +106,7 @@ python inference.py path/alla/immagine.jpg models/best_model.keras
 | Batch size | 32 |
 | Seed split | 42 |
 
+---
+
+Dataset Download (AID) : https://www.kaggle.com/datasets/jiayuanchengala/aid-scene-classification-datasets?resource=download
+Dataset Download (UC Merced Land use) : https://www.kaggle.com/datasets/abdulhasibuddin/uc-merced-land-use-dataset
